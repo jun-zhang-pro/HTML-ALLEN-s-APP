@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upgrade Clicker Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .game-container {
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        #click-target {
+            width: 200px;
+            height: 200px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            margin: 0 auto;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+        #click-target:active {
+            transform: scale(0.95);
+        }
+        #score-display {
+            font-size: 32px;
+            margin: 10px 0;
+        }
+        .upgrades {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        .upgrade {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .upgrade:hover {
+            background-color: #0b7dda;
+        }
+        .upgrade:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upgrade Clicker Game</h1>
+    <div class="game-container">
+        <div id="score-display">Points: 0</div>
+        <div id="click-target" onclick="addPoints()">CLICK ME!</div>
+        
+        <div class="upgrades">
+            <button class="upgrade" onclick="buyUpgrade('clickPower')">
+                +1 Point Per Click (Cost: 10)
+            </button>
+            <button class="upgrade" onclick="buyUpgrade('autoClicker')">
+                Auto Clicker (Cost: 50)
+            </button>
+            <button class="upgrade" onclick="buyUpgrade('megaClick')">
+                Mega Click (Cost: 200)
+            </button>
+        </div>
+        
+        <div class="stats">
+            <div>Points Per Click: <span id="click-power">1</span></div>
+            <div>Auto Clickers: <span id="auto-clickers">0</span></div>
+        </div>
+    </div>
+
+    <script>
+        let points = 0;
+        let clickPower = 1;
+        let autoClickers = 0;
+        let autoClickerInterval;
+        const clickTarget = document.getElementById('click-target');
+        const scoreDisplay = document.getElementById('score-display');
+        const clickPowerDisplay = document.getElementById('click-power');
+        const autoClickersDisplay = document.getElementById('auto-clickers');
+
+        function addPoints() {
+            points += clickPower;
+            updateDisplay();
+            
+            // Visual feedback
+            clickTarget.textContent = `+${clickPower}!`;
+            clickTarget.style.backgroundColor = getRandomColor();
+            
+            setTimeout(() => {
+                clickTarget.textContent = 'CLICK ME!';
+            }, 200);
+        }
+
+        function buyUpgrade(type) {
+            let cost, success = false;
+            
+            switch(type) {
+                case 'clickPower':
+                    cost = 10 * clickPower;
+                    if (points >= cost) {
+                        points -= cost;
+                        clickPower++;
+                        success = true;
+                    }
+                    break;
+                case 'autoClicker':
+                    cost = 50 + (autoClickers * 25);
+                    if (points >= cost) {
+                        points -= cost;
+                        autoClickers++;
+                        startAutoClickers();
+                        success = true;
+                    }
+                    break;
+                case 'megaClick':
+                    cost = 200;
+                    if (points >= cost) {
+                        points -= cost;
+                        points += 100; // Bonus points
+                        success = true;
+                    }
+                    break;
+            }
+            
+            if (success) {
+                updateDisplay();
+                clickTarget.textContent = 'UPGRADED!';
+                setTimeout(() => {
+                    clickTarget.textContent = 'CLICK ME!';
+                }, 500);
+            }
+        }
+
+        function startAutoClickers() {
+            if (autoClickerInterval) clearInterval(autoClickerInterval);
+            
+            autoClickerInterval = setInterval(() => {
+                points += autoClickers;
+                updateDisplay();
+            }, 1000);
+        }
+
+        function updateDisplay() {
+            scoreDisplay.textContent = `Points: ${points}`;
+            clickPowerDisplay.textContent = clickPower;
+            autoClickersDisplay.textContent = autoClickers;
+            
+            // Update upgrade button states
+            document.querySelectorAll('.upgrade').forEach(btn => {
+                const cost = getUpgradeCost(btn.textContent);
+                btn.disabled = points < cost;
+            });
+        }
+
+        function getUpgradeCost(text) {
+            const match = text.match(/Cost: (\d+)/);
+            return match ? parseInt(match[1]) : 0;
+        }
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+    </script>
+</body>
+</html>

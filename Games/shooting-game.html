@@ -6,11 +6,11 @@
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #222;
+            background-color: #1f50da;
         }
         #gameCanvas {
             display: block;
-            background-color: #000;
+            background-color: #1f50da;
         }
         #score {
             position: absolute;
@@ -41,14 +41,14 @@
             y: canvas.height - 50,
             width: 30,
             height: 50,
-            speed: 3,
+            speed: 1.5,
             color: '#3498db',
             health: 3
         };
 
         // Player bullets
         const bullets = [];
-        const bulletSpeed = 5;
+        const bulletSpeed = 2.5;
         const bulletSize = 5;
 
         // Enemy planes
@@ -59,7 +59,7 @@
 
         // Enemy bullets
         const enemyBullets = [];
-        const enemyBulletSpeed = 3;
+        const enemyBulletSpeed = 1.5;
 
         // Controls
         const keys = {
@@ -127,7 +127,7 @@
                     y: -30,
                     width: 30,
                     height: 30,
-                    speed: 1 + Math.random(),
+                    speed: 0.5 + Math.random()/2,
                     lastShot: 0
                 });
             }

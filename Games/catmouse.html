@@ -411,12 +411,7 @@
                     mouse.speedY *= -1;
                 }
                 
-                // Flash when time is running out (last 2 seconds)
-                if (mouse.timer < 120) {
-                    ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 200); // Blinking effect
-                }
                 drawMouse(mouse.x, mouse.y, mouse.size, mouse.color, mouse.points);
-                ctx.globalAlpha = 1.0; // Reset transparency
                 
                 // Check collision with cat
                 const dx = cat.x - mouse.x;

@@ -51,7 +51,7 @@
             x: canvas.width / 2,
             y: canvas.height / 2,
             size: 50,
-            speed: 5,
+            speed: 3,
             color: '#FFA500'
         };
 
@@ -104,15 +104,15 @@
             
             // Ears
             ctx.beginPath();
-            ctx.moveTo(x - size/3, y - size/2);
-            ctx.lineTo(x - size/2, y - size);
-            ctx.lineTo(x - size/6, y - size/2);
+            ctx.moveTo(x - size/4, y - size/3);
+            ctx.lineTo(x - size/3, y - size);
+            ctx.lineTo(x - size/5, y - size/3);
             ctx.fill();
             
             ctx.beginPath();
-            ctx.moveTo(x + size/3, y - size/2);
-            ctx.lineTo(x + size/2, y - size);
-            ctx.lineTo(x + size/6, y - size/2);
+            ctx.moveTo(x + size/4, y - size/3);
+            ctx.lineTo(x + size/3, y - size);
+            ctx.lineTo(x + size/7, y - size/3);
             ctx.fill();
             
             // Eyes

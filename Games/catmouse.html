@@ -199,16 +199,7 @@
 
         // Update active powerups
         function updatePowerups() {
-            // Update active powerups
-            for (let i = cat.activePowerups.length - 1; i >= 0; i--) {
-                const powerup = cat.activePowerups[i];
-                powerup.timer--;
-                
-                if (powerup.timer <= 0) {
-                    powerup.type.reset(cat);
-                    cat.activePowerups.splice(i, 1);
-                }
-            }
+            // Don't decrement timer here - it's now handled by the 1-second interval
             
             // Check powerup collisions
             for (let i = powerups.length - 1; i >= 0; i--) {
@@ -449,13 +440,14 @@
             cat.speed = 3;
             cat.color = '#FFA500';
             
-            // Start timer
+            // Start timers
             clearInterval(timerInterval);
             timerInterval = setInterval(function() {
                 gameTime--;
                 timerElement.textContent = `Time: ${formatTime(gameTime)}`;
                 if (gameTime <= 0) {
                     clearInterval(timerInterval);
+                    clearInterval(powerupInterval);
                     cancelAnimationFrame(animationFrameId);
                     mice.length = 0;
                     powerups.length = 0;
@@ -463,6 +455,25 @@
                     document.getElementById('title').textContent = `Final Score: ${score}`;
                     document.getElementById('startScreen').style.display = 'flex';
                 }
+            }, 1000);
+
+            // Powerup timer (1 second interval)
+            powerupInterval = setInterval(function() {
+                cat.activePowerups.forEach(powerup => {
+                    powerup.timer--;
+                    if (powerup.timer <= 0) {
+                        powerup.type.reset(cat);
+                    }
+                });
+                // Filter out expired powerups
+                cat.activePowerups = cat.activePowerups.filter(p => p.timer > 0);
+                
+                // Update powerups display
+                let powerupsText = '';
+                cat.activePowerups.forEach(powerup => {
+                    powerupsText += `${powerup.type.name}: ${powerup.timer}s | `;
+                });
+                powerupsElement.textContent = powerupsText.slice(0, -3);
             }, 1000);
             
             // Start game with 3 mice

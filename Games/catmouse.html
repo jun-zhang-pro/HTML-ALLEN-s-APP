@@ -109,6 +109,7 @@
         let frameCount = 0;
         let gameTime = 300; // 5 minutes in seconds
         let timerInterval;
+        let animationFrameId;
 
         // Controls
         const keys = {
@@ -296,12 +297,13 @@
             // Draw cat
             drawCat(cat.x, cat.y, cat.size);
 
-            requestAnimationFrame(gameLoop);
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
 
         // Start button handler
         document.getElementById('startButton').addEventListener('click', function() {
             document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('title').textContent = 'Cat & Mouse Chase';
             score = 0;
             scoreElement.textContent = `Score: ${score}`;
             gameTime = 300;
@@ -317,7 +319,11 @@
                 timerElement.textContent = `Time: ${formatTime(gameTime)}`;
                 if (gameTime <= 0) {
                     clearInterval(timerInterval);
-                    alert(`Time's up! Final Score: ${score}`);
+                    cancelAnimationFrame(animationFrameId);
+                    mice.length = 0;
+                    cat.x = canvas.width / 2;
+                    cat.y = canvas.height / 2;
+                    document.getElementById('title').textContent = `Final Score: ${score}`;
                     document.getElementById('startScreen').style.display = 'flex';
                 }
             }, 1000);

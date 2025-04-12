@@ -72,6 +72,14 @@
             transform: scale(1.05);
             box-shadow: 0 6px 12px rgba(0,0,0,0.4);
         }
+        #powerups {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(240, 1, 1, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -81,6 +89,7 @@
     </div>
     <div id="score">Score: 0</div>
     <div id="timer">Time: 5:00</div>
+    <div id="powerups"></div>
     <div id="controls">Use arrow keys to move the cat</div>
     <canvas id="gameCanvas"></canvas>
 
@@ -89,6 +98,7 @@
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
         const timerElement = document.getElementById('timer');
+        const powerupsElement = document.getElementById('powerups');
         
         // Set canvas to window size
         canvas.width = window.innerWidth;
@@ -99,17 +109,50 @@
             x: canvas.width / 2,
             y: canvas.height / 2,
             size: 50,
-            speed: 7.5,
-            color: '#FFA500'
+            speed: 3,
+            color: '#FFA500',
+            activePowerups: []
         };
 
         const mice = [];
+        const powerups = [];
         let score = 0;
         let mouseSpawnRate = 60; // frames
         let frameCount = 0;
         let gameTime = 300; // 5 minutes in seconds
         let timerInterval;
         let animationFrameId;
+
+        // Powerup types
+        const POWERUP_TYPES = {
+            SPEED_BOOST: {
+                name: 'Speed Boost',
+                color: '#00FF00',
+                duration: 25,
+                effect: (cat) => {
+                    cat.speed = 6;
+                    cat.color = '#00FF00';
+                },
+                reset: (cat) => {
+                    cat.speed = 3;
+                    cat.color = '#FFA500';
+                }
+            },
+            DOUBLE_POINTS: {
+                name: 'Double Points',
+                color: '#FFFF00',
+                duration: 25,
+                effect: () => {},
+                reset: () => {}
+            },
+            MAGNET: {
+                name: 'Mouse Magnet',
+                color: '#FF00FF',
+                duration: 25,
+                effect: () => {},
+                reset: () => {}
+            }
+        };
 
         // Controls
         const keys = {
@@ -124,6 +167,76 @@
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // Spawn a random powerup
+        function spawnPowerup() {
+            const types = Object.keys(POWERUP_TYPES);
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            powerups.push({
+                x: Math.random() * (canvas.width - 30),
+                y: Math.random() * (canvas.height - 30),
+                size: 30,
+                type: POWERUP_TYPES[type],
+                active: false,
+                timer: 0
+            });
+        }
+
+        // Draw powerup
+        function drawPowerup(x, y, size, type) {
+            ctx.fillStyle = type.color;
+            ctx.beginPath();
+            ctx.arc(x, y, size/2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(type.name.charAt(0), x, y + 4);
+        }
+
+        // Update active powerups
+        function updatePowerups() {
+            // Update active powerups
+            for (let i = cat.activePowerups.length - 1; i >= 0; i--) {
+                const powerup = cat.activePowerups[i];
+                powerup.timer--;
+                
+                if (powerup.timer <= 0) {
+                    powerup.type.reset(cat);
+                    cat.activePowerups.splice(i, 1);
+                }
+            }
+            
+            // Check powerup collisions
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const powerup = powerups[i];
+                const dx = cat.x - powerup.x;
+                const dy = cat.y - powerup.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < (cat.size/2 + powerup.size/2)) {
+                    // Cat collected powerup
+                    powerup.type.effect(cat);
+                    powerup.timer = powerup.type.duration;
+                    cat.activePowerups.push(powerup);
+                    powerups.splice(i, 1);
+                }
+            }
+            
+            // Update powerups display
+            let powerupsText = '';
+            cat.activePowerups.forEach(powerup => {
+                powerupsText += `${powerup.type.name}: ${powerup.timer}s | `;
+            });
+            powerupsElement.textContent = powerupsText.slice(0, -3);
+            
+            // Randomly spawn new powerups
+            if (Math.random() < 0.005) { // 0.5% chance per frame
+                spawnPowerup();
+            }
         }
 
         // Event listeners
@@ -256,6 +369,14 @@
                 spawnMouse();
             }
 
+            // Update powerups
+            updatePowerups();
+
+            // Draw powerups
+            powerups.forEach(powerup => {
+                drawPowerup(powerup.x, powerup.y, powerup.size, powerup.type);
+            });
+
             // Update and draw mice
             for (let i = mice.length - 1; i >= 0; i--) {
                 const mouse = mice[i];
@@ -282,14 +403,21 @@
                 if (distance < (cat.size/2 + mouse.size/2)) {
                     // Cat caught mouse!
                     mice.splice(i, 1);
-                    score += mouse.points;
+                    
+                    // Check for double points powerup
+                    let points = mouse.points;
+                    if (cat.activePowerups.some(p => p.type.name === 'Double Points')) {
+                        points *= 2;
+                    }
+                    
+                    score += points;
                     scoreElement.textContent = `Score: ${score}`;
                     
                     // Special effect for valuable mice
                     if (mouse.points >= 30) {
                         ctx.fillStyle = 'white';
                         ctx.font = '20px Arial';
-                        ctx.fillText(`+${mouse.points}!`, cat.x, cat.y - 20);
+                        ctx.fillText(`+${points}!`, cat.x, cat.y - 20);
                     }
                 }
             }
@@ -308,9 +436,18 @@
             scoreElement.textContent = `Score: ${score}`;
             gameTime = 300;
             timerElement.textContent = `Time: ${formatTime(gameTime)}`;
+            powerupsElement.textContent = '';
             
-            // Clear any existing mice
+            // Clear any existing mice and powerups
             mice.length = 0;
+            powerups.length = 0;
+            cat.activePowerups = [];
+            
+            // Reset cat
+            cat.x = canvas.width / 2;
+            cat.y = canvas.height / 2;
+            cat.speed = 3;
+            cat.color = '#FFA500';
             
             // Start timer
             clearInterval(timerInterval);
@@ -321,8 +458,8 @@
                     clearInterval(timerInterval);
                     cancelAnimationFrame(animationFrameId);
                     mice.length = 0;
-                    cat.x = canvas.width / 2;
-                    cat.y = canvas.height / 2;
+                    powerups.length = 0;
+                    cat.activePowerups = [];
                     document.getElementById('title').textContent = `Final Score: ${score}`;
                     document.getElementById('startScreen').style.display = 'flex';
                 }

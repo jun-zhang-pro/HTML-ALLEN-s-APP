@@ -116,6 +116,7 @@
 
         const mice = [];
         const powerups = [];
+        const pointPopups = [];
         let score = 0;
         let mouseSpawnRate = 60; // frames
         let frameCount = 0;
@@ -149,8 +150,12 @@
                 name: 'Mouse Magnet',
                 color: '#FF00FF',
                 duration: 25,
-                effect: () => {},
-                reset: () => {}
+                effect: (cat) => {
+                    cat.color = '#FF00FF';
+                },
+                reset: (cat) => {
+                    cat.color = '#FFA500';
+                }
             }
         };
 
@@ -373,8 +378,22 @@
                 const mouse = mice[i];
                 
                 // Move mouse
-                mouse.x += mouse.speedX;
-                mouse.y += mouse.speedY;
+                const magnetPowerup = cat.activePowerups.find(p => p.type.name === 'Mouse Magnet');
+                if (magnetPowerup) {
+                    // Calculate direction to cat
+                    const dx = cat.x - mouse.x;
+                    const dy = cat.y - mouse.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Move mouse toward cat (stronger attraction when closer)
+                    const attraction = 0.1 * (1 - Math.min(1, distance / 300));
+                    mouse.x += dx * attraction;
+                    mouse.y += dy * attraction;
+                } else {
+                    // Normal mouse movement
+                    mouse.x += mouse.speedX;
+                    mouse.y += mouse.speedY;
+                }
                 
                 // Bounce off walls
                 if (mouse.x <= mouse.size/2 || mouse.x >= canvas.width - mouse.size/2) {
@@ -404,12 +423,32 @@
                     score += points;
                     scoreElement.textContent = `Score: ${score}`;
                     
-                    // Special effect for valuable mice
-                    if (mouse.points >= 30) {
-                        ctx.fillStyle = 'white';
-                        ctx.font = '20px Arial';
-                        ctx.fillText(`+${points}!`, cat.x, cat.y - 20);
-                    }
+                    // Create point popup
+                    const popup = {
+                        x: mouse.x,
+                        y: mouse.y,
+                        text: `+${points}`,
+                        timer: 60, // 1 second at 60fps
+                        color: 'black',
+                        fontSize: 28 // Larger font size
+                    };
+                    pointPopups.push(popup);
+                }
+            }
+
+            // Update and draw point popups
+            for (let i = pointPopups.length - 1; i >= 0; i--) {
+                const popup = pointPopups[i];
+                popup.timer--;
+                popup.y -= 0.5; // Float upward
+                
+                ctx.fillStyle = popup.color;
+                ctx.font = `${popup.fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText(popup.text, popup.x, popup.y);
+                
+                if (popup.timer <= 0) {
+                    pointPopups.splice(i, 1);
                 }
             }
 

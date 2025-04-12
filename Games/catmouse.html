@@ -1,2 +1,224 @@
 <!DOCTYPE html>
-<
+<html>
+<head>
+    <title>Cat & Mouse Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #05f942;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            display: block;
+            background-color: #0ee2f1;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(240, 1, 1, 0.5);
+        }
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="controls">Use arrow keys to move the cat</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        
+        // Set canvas to window size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game elements
+        const cat = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 50,
+            speed: 5,
+            color: '#FFA500'
+        };
+
+        const mice = [];
+        let score = 0;
+        let mouseSpawnRate = 60; // frames
+        let frameCount = 0;
+
+        // Controls
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ArrowUp: false,
+            ArrowDown: false
+        };
+
+        // Event listeners
+        window.addEventListener('keydown', (e) => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = false;
+            }
+        });
+
+        // Create a new mouse
+        function spawnMouse() {
+            const size = 20 + Math.random() * 15;
+            mice.push({
+                x: Math.random() * (canvas.width - size),
+                y: Math.random() * (canvas.height - size),
+                size: size,
+                speedX: (Math.random() - 0.5) * 3,
+                speedY: (Math.random() - 0.5) * 3,
+                color: `hsl(${Math.random() * 360}, 70%, 50%)`
+            });
+        }
+
+        // Draw cat with ears
+        function drawCat(x, y, size) {
+            // Body
+            ctx.fillStyle = cat.color;
+            ctx.beginPath();
+            ctx.arc(x, y, size/2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ears
+            ctx.beginPath();
+            ctx.moveTo(x - size/3, y - size/2);
+            ctx.lineTo(x - size/2, y - size);
+            ctx.lineTo(x - size/6, y - size/2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(x + size/3, y - size/2);
+            ctx.lineTo(x + size/2, y - size);
+            ctx.lineTo(x + size/6, y - size/2);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x - size/6, y - size/8, size/8, 0, Math.PI * 2);
+            ctx.arc(x + size/6, y - size/8, size/8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupils
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(x - size/6, y - size/8, size/16, 0, Math.PI * 2);
+            ctx.arc(x + size/6, y - size/8, size/16, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Draw mouse
+        function drawMouse(x, y, size, color) {
+            // Body
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, size/2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ears
+            ctx.beginPath();
+            ctx.arc(x - size/3, y - size/3, size/4, 0, Math.PI * 2);
+            ctx.arc(x + size/3, y - size/3, size/4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Tail
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size/5;
+            ctx.beginPath();
+            ctx.moveTo(x + size/2, y);
+            ctx.lineTo(x + size, y + size/3);
+            ctx.stroke();
+        }
+
+        // Game loop
+        function gameLoop() {
+            // Clear canvas
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Move cat
+            if (keys.ArrowLeft) cat.x = Math.max(cat.size/2, cat.x - cat.speed);
+            if (keys.ArrowRight) cat.x = Math.min(canvas.width - cat.size/2, cat.x + cat.speed);
+            if (keys.ArrowUp) cat.y = Math.max(cat.size/2, cat.y - cat.speed);
+            if (keys.ArrowDown) cat.y = Math.min(canvas.height - cat.size/2, cat.y + cat.speed);
+
+            // Spawn mice
+            frameCount++;
+            if (frameCount % mouseSpawnRate === 0) {
+                spawnMouse();
+            }
+
+            // Update and draw mice
+            for (let i = mice.length - 1; i >= 0; i--) {
+                const mouse = mice[i];
+                
+                // Move mouse
+                mouse.x += mouse.speedX;
+                mouse.y += mouse.speedY;
+                
+                // Bounce off walls
+                if (mouse.x <= mouse.size/2 || mouse.x >= canvas.width - mouse.size/2) {
+                    mouse.speedX *= -1;
+                }
+                if (mouse.y <= mouse.size/2 || mouse.y >= canvas.height - mouse.size/2) {
+                    mouse.speedY *= -1;
+                }
+                
+                drawMouse(mouse.x, mouse.y, mouse.size, mouse.color);
+                
+                // Check collision with cat
+                const dx = cat.x - mouse.x;
+                const dy = cat.y - mouse.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < (cat.size/2 + mouse.size/2)) {
+                    // Cat caught mouse!
+                    mice.splice(i, 1);
+                    score += Math.floor(50 - mouse.size); // Smaller mice give more points
+                    scoreElement.textContent = `Score: ${score}`;
+                }
+            }
+
+            // Draw cat
+            drawCat(cat.x, cat.y, cat.size);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start game with 3 mice
+        for (let i = 0; i < 3; i++) {
+            spawnMouse();
+        }
+        gameLoop();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

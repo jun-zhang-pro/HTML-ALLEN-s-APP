@@ -275,7 +275,8 @@
                 speedX: (Math.random() - 0.5) * 3,
                 speedY: (Math.random() - 0.5) * 3,
                 color: color,
-                points: points
+                points: points,
+                timer: 900 // 15 seconds at 60fps
             });
         }
 
@@ -377,6 +378,13 @@
             for (let i = mice.length - 1; i >= 0; i--) {
                 const mouse = mice[i];
                 
+                // Decrement timer and remove if expired
+                mouse.timer--;
+                if (mouse.timer <= 0) {
+                    mice.splice(i, 1);
+                    continue;
+                }
+
                 // Move mouse
                 const magnetPowerup = cat.activePowerups.find(p => p.type.name === 'Mouse Magnet');
                 if (magnetPowerup) {

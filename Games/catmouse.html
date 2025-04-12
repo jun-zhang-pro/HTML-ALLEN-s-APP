@@ -127,16 +127,16 @@
             
             if (mouseType < 0.1) { // 10% chance for golden mouse (50 points)
                 color = 'gold';
-                points = 50;
+                points = 1000;
             } else if (mouseType < 0.3) { // 20% chance for silver mouse (30 points)
                 color = 'silver';
-                points = 30;
+                points = 500;
             } else if (mouseType < 0.6) { // 30% chance for small mouse (20 points)
                 color = `hsl(${Math.random() * 360}, 70%, 50%)`;
-                points = 20;
+                points = 150;
             } else { // 40% chance for normal mouse (10 points)
                 color = `hsl(${Math.random() * 360}, 70%, 50%)`;
-                points = 10;
+                points = 50;
             }
 
             mice.push({
